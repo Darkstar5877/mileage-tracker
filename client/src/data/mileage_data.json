@@ -1,0 +1,317 @@
+[
+  {
+    "from": "SHS/LOMB",
+    "to": "mhs",
+    "miles": 2.3
+  },
+  {
+    "from": "SHS/LOMB",
+    "to": "ace",
+    "miles": 3.3
+  },
+  {
+    "from": "SHS/LOMB",
+    "to": "mce",
+    "miles": 1.6
+  },
+  {
+    "from": "SHS/LOMB",
+    "to": "tre",
+    "miles": 3.2
+  },
+  {
+    "from": "SHS/LOMB",
+    "to": "jre",
+    "miles": 1.1
+  },
+  {
+    "from": "SHS/LOMB",
+    "to": "bre",
+    "miles": 2.8
+  },
+  {
+    "from": "SHS/LOMB",
+    "to": "pre",
+    "miles": 3.8
+  },
+  {
+    "from": "MHS",
+    "to": "shs/lomb",
+    "miles": 2.3
+  },
+  {
+    "from": "MHS",
+    "to": "bre",
+    "miles": 0.5
+  },
+  {
+    "from": "MHS",
+    "to": "cms",
+    "miles": 2.9
+  },
+  {
+    "from": "MHS",
+    "to": "ace",
+    "miles": 4.9
+  },
+  {
+    "from": "MHS",
+    "to": "jre",
+    "miles": 2.5
+  },
+  {
+    "from": "MHS",
+    "to": "mce",
+    "miles": 1.8
+  },
+  {
+    "from": "MHS",
+    "to": "pre",
+    "miles": 2.0
+  },
+  {
+    "from": "MHS",
+    "to": "tre",
+    "miles": 1.0
+  },
+  {
+    "from": "BRE",
+    "to": "shs/lomb",
+    "miles": 2.8
+  },
+  {
+    "from": "BRE",
+    "to": "mhs",
+    "miles": 0.5
+  },
+  {
+    "from": "BRE",
+    "to": "cms",
+    "miles": 2.0
+  },
+  {
+    "from": "BRE",
+    "to": "ace",
+    "miles": 5.5
+  },
+  {
+    "from": "BRE",
+    "to": "jre",
+    "miles": 2.9
+  },
+  {
+    "from": "BRE",
+    "to": "mce",
+    "miles": 1.1
+  },
+  {
+    "from": "BRE",
+    "to": "pre",
+    "miles": 2.5
+  },
+  {
+    "from": "BRE",
+    "to": "tre",
+    "miles": 1.4
+  },
+  {
+    "from": "CMS",
+    "to": "shs/lomb",
+    "miles": 2.5
+  },
+  {
+    "from": "CMS",
+    "to": "bre",
+    "miles": 2.9
+  },
+  {
+    "from": "CMS",
+    "to": "bre",
+    "miles": 2.0
+  },
+  {
+    "from": "CMS",
+    "to": "bre",
+    "miles": 5.1
+  },
+  {
+    "from": "CMS",
+    "to": "jre",
+    "miles": 3.1
+  },
+  {
+    "from": "CMS",
+    "to": "mce",
+    "miles": 1.1
+  },
+  {
+    "from": "CMS",
+    "to": "pre",
+    "miles": 4.9
+  },
+  {
+    "from": "CMS",
+    "to": "tre",
+    "miles": 3.8
+  },
+  {
+    "from": "ACE",
+    "to": "shs/lomb",
+    "miles": 3.3
+  },
+  {
+    "from": "ACE",
+    "to": "mhs",
+    "miles": 4.9
+  },
+  {
+    "from": "ACE",
+    "to": "bre",
+    "miles": 5.5
+  },
+  {
+    "from": "ACE",
+    "to": "cms",
+    "miles": 5.1
+  },
+  {
+    "from": "ACE",
+    "to": "jre",
+    "miles": 3.6
+  },
+  {
+    "from": "ACE",
+    "to": "mce",
+    "miles": 4.3
+  },
+  {
+    "from": "ACE",
+    "to": "pre",
+    "miles": 8.3
+  },
+  {
+    "from": "ACE",
+    "to": "tre",
+    "miles": 5.8
+  },
+  {
+    "from": "MCE",
+    "to": "shs/lomb",
+    "miles": 1.6
+  },
+  {
+    "from": "MCE",
+    "to": "mhs",
+    "miles": 1.8
+  },
+  {
+    "from": "MCE",
+    "to": "bre",
+    "miles": 1.1
+  },
+  {
+    "from": "MCE",
+    "to": "cms",
+    "miles": 1.1
+  },
+  {
+    "from": "MCE",
+    "to": "ace",
+    "miles": 4.3
+  },
+  {
+    "from": "MCE",
+    "to": "jre",
+    "miles": 1.8
+  },
+  {
+    "from": "MCE",
+    "to": "pre",
+    "miles": 3.8
+  },
+  {
+    "from": "MCE",
+    "to": "tre",
+    "miles": 2.8
+  },
+  {
+    "from": "PRE",
+    "to": "shs/lomb",
+    "miles": 3.8
+  },
+  {
+    "from": "PRE",
+    "to": "mhs",
+    "miles": 2.0
+  },
+  {
+    "from": "PRE",
+    "to": "bre",
+    "miles": 2.5
+  },
+  {
+    "from": "PRE",
+    "to": "cms",
+    "miles": 4.9
+  },
+  {
+    "from": "PRe",
+    "to": "ace",
+    "miles": 8.3
+  },
+  {
+    "from": "PRE",
+    "to": "jre",
+    "miles": 2.9
+  },
+  {
+    "from": "PRE",
+    "to": "mce",
+    "miles": 3.8
+  },
+  {
+    "from": "PRE",
+    "to": "tre",
+    "miles": 1.2
+  },
+  {
+    "from": "TRE",
+    "to": "shs/lomb",
+    "miles": 3.2
+  },
+  {
+    "from": "TRE",
+    "to": "mhs",
+    "miles": 1.0
+  },
+  {
+    "from": "TRE",
+    "to": "bre",
+    "miles": 1.4
+  },
+  {
+    "from": "TRE",
+    "to": "cms",
+    "miles": 3.8
+  },
+  {
+    "from": "TRE",
+    "to": "ace",
+    "miles": 5.8
+  },
+  {
+    "from": "TRE",
+    "to": "jre",
+    "miles": 3.0
+  },
+  {
+    "from": "TRE",
+    "to": "mce",
+    "miles": 2.8
+  },
+  {
+    "from": "TRE",
+    "to": "pre",
+    "miles": 1.2
+  }
+]

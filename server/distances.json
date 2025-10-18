@@ -1,0 +1,6 @@
+[
+  { "from": 1, "to": 2, "miles": 3.4 },
+  { "from": 1, "to": 3, "miles": 5.1 },
+  { "from": 2, "to": 3, "miles": 2.7 },
+  { "from": 4, "to": 5, "miles": 4.2 }
+]
