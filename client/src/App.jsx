@@ -1,27 +1,167 @@
 import React, { useState, useEffect } from "react";
-import mileageData from "./data/mileage_data.json";
 
-export default function App() {
-  const fromSchools = Array.from(new Set(mileageData.map((d) => d.from))).sort();
-  const toSchools = Array.from(new Set(mileageData.map((d) => d.to))).sort();
+// ==========================
+// Login Component
+// ==========================
+function Login({ onLogin, onSwitch }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem("token", data.token);
+        onLogin();
+      } else {
+        setError(data.message || "Login failed");
+      }
+    } catch (err) {
+      setError("Network error");
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg mt-10">
+      <h1 className="text-2xl font-bold mb-4 text-center">🔐 Login</h1>
+      <form onSubmit={handleLogin} className="space-y-4">
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full border px-3 py-2 rounded"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full border px-3 py-2 rounded"
+        />
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+        <button
+          type="submit"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+        >
+          Sign In
+        </button>
+      </form>
+      <p className="text-sm text-center mt-4">
+        Don’t have an account?{" "}
+        <button onClick={onSwitch} className="text-blue-600 hover:underline">
+          Register
+        </button>
+      </p>
+    </div>
+  );
+}
+
+// ==========================
+// Register Component
+// ==========================
+function Register({ onSwitch }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage("✅ Account created! You can now log in.");
+      } else {
+        setMessage(data.message || "Registration failed");
+      }
+    } catch (err) {
+      setMessage("Network error");
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg mt-10">
+      <h1 className="text-2xl font-bold mb-4 text-center">✉️ Register</h1>
+      <form onSubmit={handleRegister} className="space-y-4">
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full border px-3 py-2 rounded"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full border px-3 py-2 rounded"
+        />
+        {message && <p className="text-sm text-center">{message}</p>}
+        <button
+          type="submit"
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded"
+        >
+          Create Account
+        </button>
+      </form>
+      <p className="text-sm text-center mt-4">
+        Already have an account?{" "}
+        <button onClick={onSwitch} className="text-blue-600 hover:underline">
+          Log in
+        </button>
+      </p>
+    </div>
+  );
+}
+
+// ==========================
+// Mileage Tracker Component
+// ==========================
+function MileageTracker({ onLogout }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [trips, setTrips] = useState([]);
+  const [mileageData, setMileageData] = useState([]);
   const ratePerMile = 0.7;
 
-  // ✅ Load saved trips
+  const token = localStorage.getItem("token");
+
+  // Load trips from backend
   useEffect(() => {
-    const savedTrips = localStorage.getItem("trips");
-    if (savedTrips) {
-      setTrips(JSON.parse(savedTrips));
-    }
+    const fetchTrips = async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/trips`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setTrips(data);
+    };
+    fetchTrips();
+  }, [token]);
+
+  // Load mileage data JSON
+  useEffect(() => {
+    import("./data/mileage_data.json").then((module) => {
+      setMileageData(module.default);
+    });
   }, []);
 
-  // ✅ Save trips whenever they change
-  useEffect(() => {
-    localStorage.setItem("trips", JSON.stringify(trips));
-  }, [trips]);
+  const fromSchools = Array.from(new Set(mileageData.map((d) => d.from))).sort();
+  const toSchools = Array.from(new Set(mileageData.map((d) => d.to))).sort();
 
   const findDistance = (from, to) => {
     const entry =
@@ -33,36 +173,48 @@ export default function App() {
     return entry ? entry.miles : null;
   };
 
-  const handleAddTrip = () => {
+  const handleAddTrip = async () => {
     if (!from || !to) {
       alert("Please select both schools.");
       return;
     }
-
     if (from === to) {
-      alert("You cannot select the same school for both From and To.");
+      alert("You cannot select the same school for both.");
       return;
     }
 
     const miles = findDistance(from, to);
     if (miles !== null) {
-      setTrips([...trips, { from, to, miles, date: new Date().toISOString() }]);
+      const trip = {
+        from_school: from,
+        to_school: to,
+        miles,
+        date: new Date().toISOString(),
+      };
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/trips`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(trip),
+      });
+
+      if (res.ok) {
+        setTrips([...trips, trip]);
+      } else {
+        alert("Failed to save trip");
+      }
     } else {
       alert("No mileage data found for that route.");
     }
   };
 
-  const handleClearTrips = () => {
-    if (confirm("Are you sure you want to clear all trips?")) {
-      setTrips([]);
-      localStorage.removeItem("trips");
-    }
-  };
-
-  // 📤 Export trips to CSV (with totals)
+  // 📤 Export CSV
   const handleExportCSV = () => {
     if (trips.length === 0) {
-      alert("No trips to export!");
+      alert("No trips to export.");
       return;
     }
 
@@ -72,21 +224,23 @@ export default function App() {
     const headers = ["Date", "From", "To", "Miles"];
     const rows = trips.map(
       (t) =>
-        `${new Date(t.date).toLocaleDateString()},${t.from},${t.to},${t.miles}`
+        `${new Date(t.date).toLocaleDateString()},${t.from_school},${t.to_school},${t.miles}`
     );
 
-    // Add summary rows
     rows.push("");
-    rows.push(`Total Miles,, ,${totalMiles}`);
-    rows.push(`Total Reimbursement,, ,$${totalReimbursement}`);
+    rows.push(`Total Miles,,,${totalMiles}`);
+    rows.push(`Total Reimbursement,,,${totalReimbursement}`);
 
     const csvContent = [headers.join(","), ...rows].join("\n");
-
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
+
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "mileage_report.csv");
+    link.setAttribute(
+      "download",
+      `mileage_report_${new Date().toLocaleDateString().replaceAll("/", "-")}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -98,63 +252,62 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
       <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-lg">
-        <h1 className="text-3xl font-bold text-center mb-6">
-          🚗 Mileage Tracker
-        </h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-3xl font-bold">🚗 Mileage Tracker</h1>
+          <button
+            onClick={() => {
+              localStorage.removeItem("token");
+              onLogout();
+            }}
+            className="text-red-600 hover:underline"
+          >
+            Logout
+          </button>
+        </div>
 
+        {/* Dropdowns */}
         <div className="space-y-4">
-          {/* FROM Dropdown */}
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">From:</label>
+            <label className="block mb-1 font-medium">From:</label>
             <select
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2"
+              className="w-full border rounded px-3 py-2"
             >
               <option value="">Select school</option>
-              {fromSchools.map((school) => (
-                <option
-                  key={school}
-                  value={school}
-                  disabled={school === to}
-                >
-                  {school}
+              {fromSchools.map((s) => (
+                <option key={s} value={s} disabled={s === to}>
+                  {s}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* TO Dropdown */}
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">To:</label>
+            <label className="block mb-1 font-medium">To:</label>
             <select
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2"
+              className="w-full border rounded px-3 py-2"
             >
               <option value="">Select school</option>
-              {toSchools.map((school) => (
-                <option
-                  key={school}
-                  value={school}
-                  disabled={school === from}
-                >
-                  {school}
+              {toSchools.map((s) => (
+                <option key={s} value={s} disabled={s === from}>
+                  {s}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Add Trip Button */}
           <button
             onClick={handleAddTrip}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-2 transition-colors"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
           >
             ➕ Add Trip
           </button>
         </div>
 
-        {/* Trip Log */}
+        {/* Trip List */}
         {trips.length > 0 && (
           <div className="mt-6">
             <h2 className="text-xl font-semibold mb-2">Trip Log:</h2>
@@ -162,17 +315,17 @@ export default function App() {
               {trips.map((t, idx) => (
                 <li key={idx} className="py-2 flex justify-between text-sm">
                   <span>
-                    {t.from} → {t.to}
+                    {t.from_school} → {t.to_school}
                   </span>
                   <span className="font-medium">{t.miles} mi</span>
                 </li>
               ))}
             </ul>
 
-            {/* Totals */}
             <div className="mt-4 border-t pt-4">
               <p className="text-lg font-semibold">
-                Total Miles: <span className="text-blue-700">{totalMiles}</span>
+                Total Miles:{" "}
+                <span className="text-blue-700">{totalMiles}</span>
               </p>
               <p className="text-lg font-semibold">
                 Reimbursement:{" "}
@@ -180,24 +333,36 @@ export default function App() {
               </p>
             </div>
 
-            {/* Clear Trips */}
-            <button
-              onClick={handleClearTrips}
-              className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg py-2 transition-colors"
-            >
-              🗑️ Clear Trips
-            </button>
-
-            {/* 📧 Export Button */}
             <button
               onClick={handleExportCSV}
               className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg py-2 transition-colors"
             >
-              📧 Export Mileage Report (CSV)
+              📤 Export Mileage Report (CSV)
             </button>
           </div>
         )}
       </div>
     </div>
   );
+}
+
+// ==========================
+// App Component (Main)
+// ==========================
+export default function App() {
+  const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [showRegister, setShowRegister] = useState(false);
+
+  if (!loggedIn) {
+    return showRegister ? (
+      <Register onSwitch={() => setShowRegister(false)} />
+    ) : (
+      <Login
+        onLogin={() => setLoggedIn(true)}
+        onSwitch={() => setShowRegister(true)}
+      />
+    );
+  }
+
+  return <MileageTracker onLogout={() => setLoggedIn(false)} />;
 }
