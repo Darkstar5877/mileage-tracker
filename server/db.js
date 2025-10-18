@@ -12,16 +12,27 @@ export async function initDB() {
     driver: sqlite3.Database,
   });
 
-  // Create table if it doesn’t exist
+  // ✅ Users table (email + hashed password)
   await db.exec(`
-    CREATE TABLE IF NOT EXISTS mileage (
+    CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      date TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL
+    );
+  `);
+
+  // ✅ Trips table (linked to users)
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS trips (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      from_school TEXT NOT NULL,
+      to_school TEXT NOT NULL,
       miles REAL NOT NULL,
-      description TEXT
+      date TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users (id)
     );
   `);
 
   return db;
 }
-
