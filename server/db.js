@@ -1,28 +1,23 @@
-import sqlite3 from "sqlite3";
-import { open } from "sqlite";
+import Database from "better-sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export async function initDB() {
-  const db = await open({
-    filename: path.join(__dirname, "mileage.db"),
-    driver: sqlite3.Database,
-  });
+export function initDB() {
+  const dbPath = path.join(__dirname, "mileage.db");
+  const db = new Database(dbPath);
 
-  // ✅ Users table (email + hashed password)
-  await db.exec(`
+  db.prepare(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL
     );
-  `);
+  `).run();
 
-  // ✅ Trips table (linked to users)
-  await db.exec(`
+  db.prepare(`
     CREATE TABLE IF NOT EXISTS trips (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -32,7 +27,7 @@ export async function initDB() {
       date TEXT NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users (id)
     );
-  `);
+  `).run();
 
   return db;
 }

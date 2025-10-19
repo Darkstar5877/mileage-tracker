@@ -14,25 +14,24 @@ const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 app.use(cors());
 app.use(bodyParser.json());
 
+// ✅ Initialize database (synchronous now)
+const db = initDB();
+
 // ✅ Register a new user
-app.post("/register", async (req, res) => {
+app.post("/register", (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password required." });
   }
 
-  const db = await initDB();
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   try {
-    await db.run(
-      "INSERT INTO users (email, password) VALUES (?, ?)",
-      [email, hashedPassword]
-    );
+    db.prepare("INSERT INTO users (email, password) VALUES (?, ?)").run(email, hashedPassword);
     res.status(201).json({ message: "User registered successfully." });
   } catch (error) {
-    if (error.message.includes("UNIQUE constraint")) {
+    if (error.message.includes("UNIQUE")) {
       res.status(400).json({ message: "Email already registered." });
     } else {
       console.error(error);
@@ -42,16 +41,14 @@ app.post("/register", async (req, res) => {
 });
 
 // ✅ Login existing user
-app.post("/login", async (req, res) => {
+app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  const db = await initDB();
 
-  const user = await db.get("SELECT * FROM users WHERE email = ?", [email]);
+  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
   if (!user) return res.status(401).json({ message: "Invalid credentials." });
 
-  const validPassword = await bcrypt.compare(password, user.password);
-  if (!validPassword)
-    return res.status(401).json({ message: "Invalid credentials." });
+  const validPassword = bcrypt.compareSync(password, user.password);
+  if (!validPassword) return res.status(401).json({ message: "Invalid credentials." });
 
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
   res.json({ token });
@@ -73,28 +70,26 @@ function authenticate(req, res, next) {
 }
 
 // ✅ Get all trips for the logged-in user
-app.get("/trips", authenticate, async (req, res) => {
-  const db = await initDB();
-  const trips = await db.all("SELECT * FROM trips WHERE user_id = ?", [req.userId]);
+app.get("/trips", authenticate, (req, res) => {
+  const trips = db.prepare("SELECT * FROM trips WHERE user_id = ?").all(req.userId);
   res.json(trips);
 });
 
 // ✅ Add a new trip
-app.post("/trips", authenticate, async (req, res) => {
+app.post("/trips", authenticate, (req, res) => {
   const { from_school, to_school, miles, date } = req.body;
   if (!from_school || !to_school || !miles || !date) {
     return res.status(400).json({ message: "All trip fields are required." });
   }
 
-  const db = await initDB();
-  await db.run(
-    "INSERT INTO trips (user_id, from_school, to_school, miles, date) VALUES (?, ?, ?, ?, ?)",
-    [req.userId, from_school, to_school, miles, date]
-  );
+  db.prepare(
+    "INSERT INTO trips (user_id, from_school, to_school, miles, date) VALUES (?, ?, ?, ?, ?)"
+  ).run(req.userId, from_school, to_school, miles, date);
+
   res.json({ message: "Trip added successfully." });
 });
 
-// ✅ Test route
+// ✅ Health check route
 app.get("/", (req, res) => {
   res.json({ message: "Mileage Tracker API is running 🚀" });
 });
