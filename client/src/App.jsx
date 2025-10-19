@@ -1,159 +1,27 @@
 import React, { useState, useEffect } from "react";
 
 // ==========================
-// Login Component
-// ==========================
-function Login({ onLogin, onSwitch }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem("token", data.token);
-        onLogin();
-      } else {
-        setError(data.message || "Login failed");
-      }
-    } catch (err) {
-      setError("Network error");
-    }
-  };
-
-  return (
-    <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg mt-10">
-      <h1 className="text-2xl font-bold mb-4 text-center">🔐 Login</h1>
-      <form onSubmit={handleLogin} className="space-y-4">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border px-3 py-2 rounded"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border px-3 py-2 rounded"
-        />
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-        <button
-          type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
-        >
-          Sign In
-        </button>
-      </form>
-      <p className="text-sm text-center mt-4">
-        Don’t have an account?{" "}
-        <button onClick={onSwitch} className="text-blue-600 hover:underline">
-          Register
-        </button>
-      </p>
-    </div>
-  );
-}
-
-// ==========================
-// Register Component
-// ==========================
-function Register({ onSwitch }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setMessage("");
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage("✅ Account created! You can now log in.");
-      } else {
-        setMessage(data.message || "Registration failed");
-      }
-    } catch (err) {
-      setMessage("Network error");
-    }
-  };
-
-  return (
-    <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg mt-10">
-      <h1 className="text-2xl font-bold mb-4 text-center">✉️ Register</h1>
-      <form onSubmit={handleRegister} className="space-y-4">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border px-3 py-2 rounded"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border px-3 py-2 rounded"
-        />
-        {message && <p className="text-sm text-center">{message}</p>}
-        <button
-          type="submit"
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded"
-        >
-          Create Account
-        </button>
-      </form>
-      <p className="text-sm text-center mt-4">
-        Already have an account?{" "}
-        <button onClick={onSwitch} className="text-blue-600 hover:underline">
-          Log in
-        </button>
-      </p>
-    </div>
-  );
-}
-
-// ==========================
 // Mileage Tracker Component
 // ==========================
-function MileageTracker({ onLogout }) {
+function MileageTracker() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [trips, setTrips] = useState([]);
   const [mileageData, setMileageData] = useState([]);
   const ratePerMile = 0.7;
 
-  const token = localStorage.getItem("token");
-
-  // Load trips from backend
+  // Load trips from localStorage on startup
   useEffect(() => {
-    const fetchTrips = async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/trips`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (res.ok) setTrips(data);
-    };
-    fetchTrips();
-  }, [token]);
+    const savedTrips = JSON.parse(localStorage.getItem("trips")) || [];
+    setTrips(savedTrips);
+  }, []);
 
-  // Load mileage data JSON
+  // Save trips back to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("trips", JSON.stringify(trips));
+  }, [trips]);
+
+  // Load mileage data JSON (your pre-defined distances)
   useEffect(() => {
     import("./data/mileage_data.json").then((module) => {
       setMileageData(module.default);
@@ -173,7 +41,7 @@ function MileageTracker({ onLogout }) {
     return entry ? entry.miles : null;
   };
 
-  const handleAddTrip = async () => {
+  const handleAddTrip = () => {
     if (!from || !to) {
       alert("Please select both schools.");
       return;
@@ -186,26 +54,16 @@ function MileageTracker({ onLogout }) {
     const miles = findDistance(from, to);
     if (miles !== null) {
       const trip = {
+        id: Date.now(),
         from_school: from,
         to_school: to,
         miles,
         date: new Date().toISOString(),
       };
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/trips`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(trip),
-      });
-
-      if (res.ok) {
-        setTrips([...trips, trip]);
-      } else {
-        alert("Failed to save trip");
-      }
+      setTrips([...trips, trip]);
+      setFrom("");
+      setTo("");
     } else {
       alert("No mileage data found for that route.");
     }
@@ -239,11 +97,25 @@ function MileageTracker({ onLogout }) {
     link.href = url;
     link.setAttribute(
       "download",
-      `mileage_report_${new Date().toLocaleDateString().replaceAll("/", "-")}.csv`
+      `mileage_report_${new Date()
+        .toLocaleDateString()
+        .replaceAll("/", "-")}.csv`
     );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // 🗑️ Clear all trips
+  const handleClearAll = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete all trips? This cannot be undone."
+      )
+    ) {
+      localStorage.removeItem("trips");
+      setTrips([]);
+    }
   };
 
   const totalMiles = trips.reduce((sum, t) => sum + t.miles, 0);
@@ -252,18 +124,7 @@ function MileageTracker({ onLogout }) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
       <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold">🚗 Mileage Tracker</h1>
-          <button
-            onClick={() => {
-              localStorage.removeItem("token");
-              onLogout();
-            }}
-            className="text-red-600 hover:underline"
-          >
-            Logout
-          </button>
-        </div>
+        <h1 className="text-3xl font-bold mb-4 text-center">🚗 Mileage Tracker</h1>
 
         {/* Dropdowns */}
         <div className="space-y-4">
@@ -310,10 +171,10 @@ function MileageTracker({ onLogout }) {
         {/* Trip List */}
         {trips.length > 0 && (
           <div className="mt-6">
-            <h2 className="text-xl font-semibold mb-2">Trip Log:</h2>
+            <h2 className="text-xl font-semibold mb-2">📍 Trip Log:</h2>
             <ul className="divide-y divide-gray-200">
-              {trips.map((t, idx) => (
-                <li key={idx} className="py-2 flex justify-between text-sm">
+              {trips.map((t) => (
+                <li key={t.id} className="py-2 flex justify-between text-sm">
                   <span>
                     {t.from_school} → {t.to_school}
                   </span>
@@ -333,11 +194,20 @@ function MileageTracker({ onLogout }) {
               </p>
             </div>
 
+            {/* 📤 Export CSV */}
             <button
               onClick={handleExportCSV}
               className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg py-2 transition-colors"
             >
               📤 Export Mileage Report (CSV)
+            </button>
+
+            {/* 🗑️ Clear All Trips */}
+            <button
+              onClick={handleClearAll}
+              className="mt-2 w-full bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg py-2 transition-colors"
+            >
+              🗑️ Clear All Trips
             </button>
           </div>
         )}
@@ -350,19 +220,5 @@ function MileageTracker({ onLogout }) {
 // App Component (Main)
 // ==========================
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
-  const [showRegister, setShowRegister] = useState(false);
-
-  if (!loggedIn) {
-    return showRegister ? (
-      <Register onSwitch={() => setShowRegister(false)} />
-    ) : (
-      <Login
-        onLogin={() => setLoggedIn(true)}
-        onSwitch={() => setShowRegister(true)}
-      />
-    );
-  }
-
-  return <MileageTracker onLogout={() => setLoggedIn(false)} />;
+  return <MileageTracker />;
 }

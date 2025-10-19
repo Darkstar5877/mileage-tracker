@@ -19,26 +19,30 @@ const db = initDB();
 
 // ✅ Register a new user
 app.post("/register", (req, res) => {
-  const { email, password } = req.body;
+  console.log("📩 Register request body:", req.body);
 
+  const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password required." });
   }
 
   const hashedPassword = bcrypt.hashSync(password, 10);
+  console.log("🔐 Hashed password:", hashedPassword);
 
   try {
     db.prepare("INSERT INTO users (email, password) VALUES (?, ?)").run(email, hashedPassword);
+    console.log("✅ User inserted into DB!");
     res.status(201).json({ message: "User registered successfully." });
   } catch (error) {
+    console.error("❌ Registration error:", error.message);
     if (error.message.includes("UNIQUE")) {
       res.status(400).json({ message: "Email already registered." });
     } else {
-      console.error(error);
       res.status(500).json({ message: "Registration failed." });
     }
   }
 });
+
 
 // ✅ Login existing user
 app.post("/login", (req, res) => {
