@@ -16,18 +16,18 @@ function MileageTracker() {
   const [mileageData, setMileageData] = useState([]);
   const ratePerMile = 0.7;
 
-  // Load trips from localStorage on startup
+  // ✅ Load trips from localStorage on startup
   useEffect(() => {
     const savedTrips = JSON.parse(localStorage.getItem("trips")) || [];
     setTrips(savedTrips);
   }, []);
 
-  // Save trips back to localStorage whenever they change
+  // ✅ Save trips back to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem("trips", JSON.stringify(trips));
   }, [trips]);
 
-  // Load static mileage data
+  // ✅ Load static mileage data
   useEffect(() => {
     import("./data/mileage_data.json").then((module) => {
       setMileageData(module.default);
@@ -47,64 +47,67 @@ function MileageTracker() {
     return entry ? entry.miles : null;
   };
 
-const handleAddTrip = () => {
-  if (!from || !to) {
-    alert("Please select both schools.");
-    return;
-  }
-  if (from === to) {
-    alert("You cannot select the same school for both.");
-    return;
-  }
+  // ✅ Add trip safely (with reimbursement as a number)
+  const handleAddTrip = () => {
+    if (!from || !to) {
+      alert("Please select both schools.");
+      return;
+    }
+    if (from === to) {
+      alert("You cannot select the same school for both.");
+      return;
+    }
 
-  const miles = findDistance(from, to);
-  if (miles !== null) {
-    const trip = {
-      id: Date.now(),
-      from_school: from,
-      to_school: to,
-      miles,
-      date: new Date().toISOString(),
-      reimbursement: (miles * ratePerMile).toFixed(2), // ✅ added reimbursement
-    };
-    setTrips([...trips, trip]);
-    setFrom("");
-    setTo("");
-  } else {
-    alert("No mileage data found for that route.");
-  }
-};
+    const miles = findDistance(from, to);
+    console.log("📍 Adding trip:", { miles, from, to });
 
+    if (miles !== null && !isNaN(miles)) {
+      const trip = {
+        id: Date.now(),
+        from_school: from,
+        to_school: to,
+        miles,
+        date: new Date().toISOString(),
+        reimbursement: Number((miles * ratePerMile).toFixed(2)), // ✅ numeric reimbursement
+      };
+      setTrips([...trips, trip]);
+      setFrom("");
+      setTo("");
+    } else {
+      alert("No mileage data found for that route.");
+    }
+  };
 
-const handleExportExcel = async () => {
-  try {
-    const response = await fetch("https://mileage-tracker-1.onrender.com/export", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ trips }), // ✅ send trips from state
-    });
+  // ✅ Export Excel (POST trips to backend)
+  const handleExportExcel = async () => {
+    try {
+      const response = await fetch("https://mileage-tracker-1.onrender.com/export", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ trips }),
+      });
 
-    if (!response.ok) throw new Error("Failed to export file");
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Export failed: ${text}`);
+      }
 
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `MileageClaim-${new Date().toISOString().slice(0,10)}.xlsx`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error("❌ Export failed:", error);
-    alert("Export failed. Check the backend logs.");
-  }
-};
-
-
-
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `MileageClaim-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("❌ Export failed:", error);
+      alert("Export failed. Check the backend logs.");
+    }
+  };
 
   // 🗑️ Clear all trips
   const handleClearAll = () => {
@@ -216,12 +219,11 @@ const handleExportExcel = async () => {
               {/* Action Buttons */}
               <div className="mt-6 space-y-3">
                 <Button
-  onClick={handleExportExcel}
-  className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-3"
->
-  📤 Export Mileage Report (Excel)
-</Button>
-
+                  onClick={handleExportExcel}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-3"
+                >
+                  📤 Export Mileage Report (Excel)
+                </Button>
 
                 <Button
                   variant="destructive"
