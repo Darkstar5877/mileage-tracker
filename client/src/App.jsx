@@ -74,42 +74,25 @@ function MileageTracker() {
     }
   };
 
-  // 📤 Export trips to CSV
-  const handleExportCSV = () => {
-    if (trips.length === 0) {
-      alert("No trips to export.");
-      return;
-    }
+const handleExport = async () => {
+  try {
+    const response = await fetch("http://localhost:4000/export");
+    if (!response.ok) throw new Error("Failed to export file");
 
-    const totalMiles = trips.reduce((sum, t) => sum + t.miles, 0);
-    const totalReimbursement = (totalMiles * ratePerMile).toFixed(2);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `MileageClaim-${new Date().toISOString().slice(0,10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("❌ Export failed:", error);
+  }
+};
 
-    const headers = ["Date", "From", "To", "Miles"];
-    const rows = trips.map(
-      (t) =>
-        `${new Date(t.date).toLocaleDateString()},${t.from_school},${t.to_school},${t.miles}`
-    );
-
-    rows.push("");
-    rows.push(`Total Miles,,,${totalMiles}`);
-    rows.push(`Total Reimbursement,,,${totalReimbursement}`);
-
-    const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute(
-      "download",
-      `mileage_report_${new Date()
-        .toLocaleDateString()
-        .replaceAll("/", "-")}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   // 🗑️ Clear all trips
   const handleClearAll = () => {
@@ -221,11 +204,12 @@ function MileageTracker() {
               {/* Action Buttons */}
               <div className="mt-6 space-y-3">
                 <Button
-                  onClick={handleExportCSV}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-3"
-                >
-                  📤 Export Mileage Report (CSV)
-                </Button>
+  onClick={handleExportExcel}
+  className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-3"
+>
+  📤 Export Mileage Report (Excel)
+</Button>
+
 
                 <Button
                   variant="destructive"
