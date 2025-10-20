@@ -22,7 +22,7 @@ function MileageTracker() {
     setTrips(savedTrips);
   }, []);
 
-  // ✅ Save trips back to localStorage whenever they change
+  // ✅ Save trips whenever they change
   useEffect(() => {
     localStorage.setItem("trips", JSON.stringify(trips));
   }, [trips]);
@@ -37,17 +37,20 @@ function MileageTracker() {
   const fromSchools = Array.from(new Set(mileageData.map((d) => d.from))).sort();
   const toSchools = Array.from(new Set(mileageData.map((d) => d.to))).sort();
 
-  const findDistance = (from, to) => {
-    const entry =
-      mileageData.find(
-        (d) =>
-          (d.from === from && d.to === to) ||
-          (d.from === to && d.to === from)
-      ) || null;
-    return entry ? entry.miles : null;
-  };
+const findDistance = (from, to) => {
+  if (!from || !to) return null;
+  const F = from.toLowerCase();
+  const T = to.toLowerCase();
 
-  // ✅ Add trip safely (with reimbursement as a number)
+  const entry = mileageData.find(
+    (d) =>
+      (d.from?.toLowerCase() === F && d.to?.toLowerCase() === T) ||
+      (d.from?.toLowerCase() === T && d.to?.toLowerCase() === F)
+  );
+  return entry ? entry.miles : null;
+};
+
+  // ✅ Add a trip
   const handleAddTrip = () => {
     if (!from || !to) {
       alert("Please select both schools.");
@@ -68,7 +71,9 @@ function MileageTracker() {
         to_school: to,
         miles,
         date: new Date().toISOString(),
-        reimbursement: Number((miles * ratePerMile).toFixed(2)), // ✅ numeric reimbursement
+        reimbursement: miles
+          ? Number((miles * ratePerMile).toFixed(2))
+          : 0, // ✅ safe reimbursement calc
       };
       setTrips([...trips, trip]);
       setFrom("");
@@ -78,16 +83,19 @@ function MileageTracker() {
     }
   };
 
-  // ✅ Export Excel (POST trips to backend)
-  const handleExportExcel = async () => {
+  // ✅ Export Excel
+ {/* const handleExportExcel = async () => {
     try {
-      const response = await fetch("https://mileage-tracker-1.onrender.com/export", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ trips }),
-      });
+      const response = await fetch(
+        "https://mileage-tracker-1.onrender.com/export",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ trips }),
+        }
+      );
 
       if (!response.ok) {
         const text = await response.text();
@@ -107,7 +115,7 @@ function MileageTracker() {
       console.error("❌ Export failed:", error);
       alert("Export failed. Check the backend logs.");
     }
-  };
+  }; */}
 
   // 🗑️ Clear all trips
   const handleClearAll = () => {
@@ -121,15 +129,63 @@ function MileageTracker() {
     }
   };
 
+    const handleExportExcel = async () => {
+  console.log("🚀 handleExportExcel clicked!");
+  console.log("📦 Trips to export:", trips);
+
+  if (trips.length === 0) {
+    alert("No trips to export.");
+    return;
+  }
+
+  try {
+    const response = await fetch("https://mileage-tracker-1.onrender.com/export", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ trips }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Export failed: ${text}`);
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `MileageClaim-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+
+    alert("✅ Excel export complete!");
+  } catch (error) {
+    console.error("❌ Export failed:", error);
+    alert(`❌ Export failed: ${error.message}`);
+  }
+};
+
+
+
+
   const totalMiles = trips.reduce((sum, t) => sum + t.miles, 0);
   const totalReimbursement = (totalMiles * ratePerMile).toFixed(2);
+
+    console.log("sanity:", { handleExportExcel: typeof handleExportExcel });
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
       <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-blue-700">🚗 PCSD Mileage Tracker</h1>
+          <h1 className="text-4xl font-bold text-blue-700">
+            🚗 PCSD Mileage Tracker
+          </h1>
           <p className="text-gray-500 mt-2 text-lg">
             Track your miles and get paid!
           </p>
@@ -216,23 +272,25 @@ function MileageTracker() {
                 </p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="mt-6 space-y-3">
-                <Button
-                  onClick={handleExportExcel}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-3"
-                >
-                  📤 Export Mileage Report (Excel)
-                </Button>
+            
+                {/* Action Buttons */}
+<div className="mt-6 space-y-3">
+  <Button
+    onClick={handleExportExcel}
+    className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-3"
+  >
+    📤 Export Mileage Report (Excel)
+  </Button>
 
-                <Button
-                  variant="destructive"
-                  onClick={handleClearAll}
-                  className="w-full text-lg py-3"
-                >
-                  🗑️ Clear All Trips
-                </Button>
-              </div>
+  <Button
+    variant="destructive"
+    onClick={handleClearAll}
+    className="w-full text-lg py-3"
+  >
+    🗑️ Clear All Trips
+  </Button>
+</div>
+
             </CardContent>
           </Card>
         ) : (
@@ -240,10 +298,10 @@ function MileageTracker() {
             No trips yet. Add your first one above!
           </p>
         )}
-      </div>
+      </div> 
     </div>
-  ); // closes the return (JSX)
-} // closes the MileageTracker function
+  ); // ✅ closes return
+} // ✅ closes MileageTracker()
 
 export default function App() {
   return <MileageTracker />;
