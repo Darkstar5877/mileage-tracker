@@ -4,9 +4,16 @@ import bodyParser from "body-parser";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import ExcelJS from "exceljs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { initDB } from "./db.js";
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const port = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
@@ -14,27 +21,21 @@ const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 app.use(cors());
 app.use(bodyParser.json());
 
-// ✅ Initialize database (synchronous now)
+// ✅ Initialize database
 const db = initDB();
 
 // ✅ Register a new user
 app.post("/register", (req, res) => {
-  console.log("📩 Register request body:", req.body);
-
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password required." });
   }
 
   const hashedPassword = bcrypt.hashSync(password, 10);
-  console.log("🔐 Hashed password:", hashedPassword);
-
   try {
     db.prepare("INSERT INTO users (email, password) VALUES (?, ?)").run(email, hashedPassword);
-    console.log("✅ User inserted into DB!");
     res.status(201).json({ message: "User registered successfully." });
   } catch (error) {
-    console.error("❌ Registration error:", error.message);
     if (error.message.includes("UNIQUE")) {
       res.status(400).json({ message: "Email already registered." });
     } else {
@@ -42,7 +43,6 @@ app.post("/register", (req, res) => {
     }
   }
 });
-
 
 // ✅ Login existing user
 app.post("/login", (req, res) => {
@@ -98,37 +98,35 @@ app.get("/", (req, res) => {
   res.json({ message: "Mileage Tracker API is running 🚀" });
 });
 
-app.get("/export", async (req, res) => {
+// ✅ Export route - accepts POST and reads trips from frontend
+app.post("/export", async (req, res) => {
   try {
+    const { trips } = req.body;
+
+    if (!trips || !Array.isArray(trips)) {
+      return res.status(400).json({ message: "No trips provided" });
+    }
+
     const templatePath = path.join(__dirname, "MileageClaim.xlsx");
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(templatePath);
     const worksheet = workbook.getWorksheet(1);
 
-    // ✅ Rename header for column F
     worksheet.getCell("F7").value = "Reimbursement";
 
-    // ✅ Fill in trip data
     trips.forEach((trip, index) => {
       const row = 8 + index;
       worksheet.getCell(`A${row}`).value = trip.date;
-      worksheet.getCell(`B${row}`).value = trip.from;
-      worksheet.getCell(`C${row}`).value = trip.to;
-      worksheet.getCell(`D${row}`).value = trip.purpose;
+      worksheet.getCell(`B${row}`).value = trip.from_school;
+      worksheet.getCell(`C${row}`).value = trip.to_school;
+      worksheet.getCell(`D${row}`).value = trip.purpose || "";
       worksheet.getCell(`E${row}`).value = trip.miles;
-      worksheet.getCell(`F${row}`).value = trip.reimbursement;
-      worksheet.getCell(`F${row}`).numFmt = '"$"#,##0.00'; // optional: keep currency format
+      worksheet.getCell(`F${row}`).value = trip.reimbursement || trip.miles * 0.7;
+      worksheet.getCell(`F${row}`).numFmt = '"$"#,##0.00';
     });
 
-    // ✅ Send file as download
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=MileageClaim.xlsx"
-    );
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
+    res.setHeader("Content-Disposition", "attachment; filename=MileageClaim.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
     await workbook.xlsx.write(res);
     res.end();
@@ -138,10 +136,7 @@ app.get("/export", async (req, res) => {
   }
 });
 
-
-// ✅ Keep your existing app.listen BELOW this
+// ✅ Start server
 app.listen(port, () => {
   console.log(`✅ Server running at http://localhost:${port}`);
 });
-
-

@@ -47,36 +47,45 @@ function MileageTracker() {
     return entry ? entry.miles : null;
   };
 
-  const handleAddTrip = () => {
-    if (!from || !to) {
-      alert("Please select both schools.");
-      return;
-    }
-    if (from === to) {
-      alert("You cannot select the same school for both.");
-      return;
-    }
+const handleAddTrip = () => {
+  if (!from || !to) {
+    alert("Please select both schools.");
+    return;
+  }
+  if (from === to) {
+    alert("You cannot select the same school for both.");
+    return;
+  }
 
-    const miles = findDistance(from, to);
-    if (miles !== null) {
-      const trip = {
-        id: Date.now(),
-        from_school: from,
-        to_school: to,
-        miles,
-        date: new Date().toISOString(),
-      };
-      setTrips([...trips, trip]);
-      setFrom("");
-      setTo("");
-    } else {
-      alert("No mileage data found for that route.");
-    }
-  };
+  const miles = findDistance(from, to);
+  if (miles !== null) {
+    const trip = {
+      id: Date.now(),
+      from_school: from,
+      to_school: to,
+      miles,
+      date: new Date().toISOString(),
+      reimbursement: (miles * ratePerMile).toFixed(2), // ✅ added reimbursement
+    };
+    setTrips([...trips, trip]);
+    setFrom("");
+    setTo("");
+  } else {
+    alert("No mileage data found for that route.");
+  }
+};
+
 
 const handleExportExcel = async () => {
   try {
-    const response = await fetch("https://mileage-tracker-1.onrender.com/export");
+    const response = await fetch("https://mileage-tracker-1.onrender.com/export", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ trips }), // ✅ send trips from state
+    });
+
     if (!response.ok) throw new Error("Failed to export file");
 
     const blob = await response.blob();
@@ -90,9 +99,10 @@ const handleExportExcel = async () => {
     window.URL.revokeObjectURL(url);
   } catch (error) {
     console.error("❌ Export failed:", error);
-    alert("Export failed. Check the backend URL or logs.");
+    alert("Export failed. Check the backend logs.");
   }
 };
+
 
 
 
