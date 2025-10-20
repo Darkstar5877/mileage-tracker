@@ -313,5 +313,46 @@
     "from": "TRE",
     "to": "pre",
     "miles": 1.2
+  },
+  {
+    "from": "JRE",
+    "to":"shs/lomb",
+    "miles": 1.1
+  },
+  {
+    "from": "JRE",
+    "to": "mhs",
+    "miles": 2.5
+  },
+  { 
+    "from": "JRE",
+    "to": "bre",
+    "miles": 2.9
+  },
+  {
+    "from": "JRE",
+    "to": "cms",
+    "miles": 3.1
+  },
+  {
+    "from": "JRE",
+    "to": "ace",
+    "miles": 3.6
+  },
+  {
+    "from": "JRE",
+    "to": "mce",
+    "miles": 1.8
+  },
+  {
+    "from": "JRE",
+    "to": "pre",
+    "miles": 2.9
+  },
+  {
+    "from": "JRE",
+    "to": "tre",
+    "miles": 3.0
   }
+
 ]
