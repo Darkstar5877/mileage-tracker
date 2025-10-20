@@ -98,6 +98,50 @@ app.get("/", (req, res) => {
   res.json({ message: "Mileage Tracker API is running 🚀" });
 });
 
+app.get("/export", async (req, res) => {
+  try {
+    const templatePath = path.join(__dirname, "MileageClaim.xlsx");
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(templatePath);
+    const worksheet = workbook.getWorksheet(1);
+
+    // ✅ Rename header for column F
+    worksheet.getCell("F7").value = "Reimbursement";
+
+    // ✅ Fill in trip data
+    trips.forEach((trip, index) => {
+      const row = 8 + index;
+      worksheet.getCell(`A${row}`).value = trip.date;
+      worksheet.getCell(`B${row}`).value = trip.from;
+      worksheet.getCell(`C${row}`).value = trip.to;
+      worksheet.getCell(`D${row}`).value = trip.purpose;
+      worksheet.getCell(`E${row}`).value = trip.miles;
+      worksheet.getCell(`F${row}`).value = trip.reimbursement;
+      worksheet.getCell(`F${row}`).numFmt = '"$"#,##0.00'; // optional: keep currency format
+    });
+
+    // ✅ Send file as download
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=MileageClaim.xlsx"
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("❌ Error exporting mileage:", error);
+    res.status(500).json({ message: "Failed to export mileage data" });
+  }
+});
+
+
+// ✅ Keep your existing app.listen BELOW this
 app.listen(port, () => {
   console.log(`✅ Server running at http://localhost:${port}`);
 });
+
+
