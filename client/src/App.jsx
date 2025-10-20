@@ -74,9 +74,9 @@ function MileageTracker() {
     }
   };
 
-const handleExport = async () => {
+const handleExportExcel = async () => {
   try {
-    const response = await fetch("https://mileage-tracker-1.onrender.com");
+    const response = await fetch("https://mileage-tracker-1.onrender.com/export");
     if (!response.ok) throw new Error("Failed to export file");
 
     const blob = await response.blob();
@@ -90,8 +90,10 @@ const handleExport = async () => {
     window.URL.revokeObjectURL(url);
   } catch (error) {
     console.error("❌ Export failed:", error);
+    alert("Export failed. Check the backend URL or logs.");
   }
 };
+
 
 
   // 🗑️ Clear all trips
