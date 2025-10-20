@@ -242,8 +242,8 @@ function MileageTracker() {
         )}
       </div>
     </div>
-  );
-} // 👈 THIS closes function MileageTracker()
+  ); // closes the return (JSX)
+} // closes the MileageTracker function
 
 export default function App() {
   return <MileageTracker />;
