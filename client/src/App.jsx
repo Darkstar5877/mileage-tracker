@@ -243,8 +243,9 @@ function MileageTracker() {
       </div>
     </div>
   );
-}
+} // 👈 THIS closes function MileageTracker()
 
 export default function App() {
   return <MileageTracker />;
 }
+
