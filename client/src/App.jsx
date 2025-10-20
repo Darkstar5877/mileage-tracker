@@ -76,7 +76,7 @@ function MileageTracker() {
 
 const handleExport = async () => {
   try {
-    const response = await fetch("http://localhost:4000/export");
+    const response = await fetch("https://mileage-tracker-1.onrender.com");
     if (!response.ok) throw new Error("Failed to export file");
 
     const blob = await response.blob();
