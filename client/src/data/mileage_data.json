@@ -33,6 +33,7 @@
   { "from": "CMS", "to": "MCE", "miles": 1.1 },
   { "from": "CMS", "to": "PRE", "miles": 4.9 },
   { "from": "CMS", "to": "TRE", "miles": 3.8 },
+  { "from": "CMS", "to": "MHS", "miles": 2.9 },
 
   { "from": "ACE", "to": "SHS/LOMB", "miles": 3.3 },
   { "from": "ACE", "to": "MHS", "miles": 4.9 },
